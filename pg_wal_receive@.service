@@ -1,0 +1,12 @@
+##########################################################
+# /etc/systemd/system/
+[Unit]
+Description=Receiving for WAL stream
+[Service]
+Type=simple
+WorkingDirectory=/mnt/backups/scripts/
+User=postgres
+Group=postgres
+ExecStart=/mnt/backups/scripts/pg_wal_backup.sh %i
+[Install]
+WantedBy=multi-user.target
