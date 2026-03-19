@@ -40,10 +40,14 @@ db_hostname is name used for connection to PostgreSQL cluster should be backuped
 crontab set for user postgres. For run scripts full path is needed. .pgpass need for replica user credentials
 #### examples 
 ```bash
-# default backup settings
+# default backup settings (f d 7)
 00 01 * * * /mnt/backups/scripts/pg_backup.sh mydbhost1
 # backup in stream mode
 00 02 * * * /mnt/backups/scripts/pg_backup.sh mydbhost2 s d 7
 # store 3 copy only
-30 02 * * * /mnt/backups/scripts/pg_backup.sh mydbhost2 f c 3
+30 02 * * * /mnt/backups/scripts/pg_backup.sh mydbhost3 f c 3
 ```
+
+## Using pg_dmp.sh
+
+## WAL's backup
