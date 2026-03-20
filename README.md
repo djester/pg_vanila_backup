@@ -49,5 +49,15 @@ crontab set for user postgres. For run scripts full path is needed. .pgpass need
 ```
 
 ## Using pg_dmp.sh
+pg_dmp.sh is very simple script but good to use in regular dump jobs with logging
+Dumps are created in binary format and should be recovered with pg_restore util
+.pgpass customize need for dump user credentials
+### Command
+```bash
+/mnt/backups/scripts/pg_dmp.sh [db_name] [db_user] [db_hostname] [pg_port] [db_encoding]
+```
+default port is 5432
+
+default encoding is UTF8
 
 ## WAL's backup
