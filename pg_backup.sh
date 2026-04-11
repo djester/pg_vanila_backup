@@ -92,7 +92,6 @@ $PG_BACKUP_CMD $PG_BACKUP_PARAMETERS
 echo End backup at $(date)
 echo
 echo Start cleanup
-echo
 echo ..move to main from temp directory...
 [ -f  ${PG_BACKUP_TMP}/base.tar.gz ] &&  mv ${PG_BACKUP_TMP}/base.tar.gz $PG_BACKUP_FILE || { echo "WARNING: temporary base.tar.gz not found" >&2; }
 if [[ "${PG_BACKUP_MODE}" == "s" ]]
@@ -104,14 +103,9 @@ then
     [ -f ${PG_BACKUP_TMP}/backup_manifest ] && mv  ${PG_BACKUP_TMP}/backup_manifest $PG_BACKUP_MANIFEST_FILE || { echo "WARNING: temporary backup_manifest not found" >&2; }
 fi
 
-
-# Clean temp files
-
 echo ..temp directory...
 rmdir ${PG_BACKUP_TMP} || { [ -d ${PG_BACKUP_TMP} ] && { echo "WARNING: cannot to remove temp backup directory" >&2; } || { echo "WARNING: no temp backup directory for remove " >&2; } }
 
-
-# Delete expired backup
 echo ..log files...
 case ${PG_BACKUP_EXPIRATION_MODE} in
     d ) find ${PG_BACKUP_LOGS}/ -mtime +${PG_BACKUP_EXPIRATION_DAYS} -delete ;;
@@ -119,7 +113,6 @@ case ${PG_BACKUP_EXPIRATION_MODE} in
     * ) echo "No expired log here" ;;
 esac
 
-# Delete expired backup logs
 echo ..backup files...
 case ${PG_BACKUP_EXPIRATION_MODE} in
     d ) find ${PG_BACKUP_DIR}/ -mtime +${PG_BACKUP_EXPIRATION_DAYS} -delete ;;
@@ -127,7 +120,6 @@ case ${PG_BACKUP_EXPIRATION_MODE} in
     * ) echo "No expired backup here" ;;
 esac
 
-# Remove PID
 echo ..remove PID file...
 rm ${PG_BACKUP_PID} || { echo "WARNING: no PID file for remove " >&2; }
 
