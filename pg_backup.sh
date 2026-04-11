@@ -32,6 +32,16 @@ PG_BACKUP_EXPIRATION_DAYS=$4
 PG_BACKUP_EXPIRATION_COUNT=$4
 [ "${PG_BACKUP_EXPIRATION_COUNT}" ] || { PG_BACKUP_EXPIRATION_COUNT=$PG_BACKUP_EXPIRATION_DEFAULT ; }
 
+PG_BACKUP_MANIFEST=$5
+PG_BACKUP_MANIFEST_DEFAULT="YM"
+[ "${PG_BACKUP_MANIFEST}" ] || { PG_BACKUP_MANIFEST=$PG_BACKUP_MANIFEST_DEFAULT ; }
+
+case $PG_BACKUP_MANIFEST in
+    "NM" ) PG_BACKUP_MANIFEST_PARAMETER="--no-manifest" ;;
+    "YM" ) PG_BACKUP_MANIFEST_PARAMETER="" ;;
+    *    ) echo "ERROR: Unknown manifest option" ; exit 1 ;;
+esac
+
 PG_BACKUP_BASE_DIR=/mnt/backups/${PG_BACKUP_HOST}
 [ -d ${PG_BACKUP_BASE_DIR} ] || { echo "ERROR: backup base directory for host ${PG_BACKUP_HOST} is not exists" >&2; exit 1; }
 
@@ -45,18 +55,17 @@ PG_BACKUP_DATE=$(date '+%Y%m%d%H%M')
 PG_BACKUP_FILE=$PG_BACKUP_DIR/${PG_BACKUP_HOST}_base_${PG_BACKUP_DATE}.tar.gz
 PG_BACKUP_WALS=$PG_BACKUP_DIR/${PG_BACKUP_HOST}_wals_${PG_BACKUP_DATE}.tar.gz
 PG_BACKUP_LOG=$PG_BACKUP_LOGS/${PG_BACKUP_HOST}_base_${PG_BACKUP_DATE}.log
+PG_BACKUP_MANIFEST_FILE=$PG_BACKUP_DIR/${PG_BACKUP_HOST}_backup_manifest_${PG_BACKUP_DATE}
 
 PG_BACKUP_TMP=$PG_BACKUP_DIR/_tmp_${PG_BACKUP_DATE}
 [ -d $PG_BACKUP_TMP ] && { echo "ERROR: temporary directory ${PG_BACKUP_TMP} already exists " >&2; exit 1; }
-#mkdir $PG_BACKUP_TMP
-rm -rf $PG_BACKUP_TMP || { [ -d $PG_BACKUP_TMP ] && { echo "WARNING: cannot to remove temp backup directory" >&2; } || { echo "WARNING: no temp backup directory for remove " >&2; } }
-rm ${PG_BACKUP_PID} || { echo "WARNING: no PID file for remove " >&2; }
+mkdir $PG_BACKUP_TMP
 
 #PG_BACKUP_CMD=/usr/lib/postgresql/16/bin/pg_basebackup
 PG_BACKUP_CMD=/usr/bin/pg_basebackup
 [ -f $PG_BACKUP_CMD ] || { echo "ERROR: pg_basebackup not found " >&2; exit 1; }
 
-PG_BACKUP_PARAMETERS="-D ${PG_BACKUP_TMP} -Ft -z -Z 5 -v ${PG_BACKUP_MODE_PARAMETER} -h ${PG_BACKUP_HOST} -U ${PG_BACKUP_USER} --no-manifest"
+PG_BACKUP_PARAMETERS="-D ${PG_BACKUP_TMP} -Ft -z -Z 5 -v ${PG_BACKUP_MODE_PARAMETER} -h ${PG_BACKUP_HOST} -U ${PG_BACKUP_USER} ${PG_BACKUP_MANIFEST_PARAMETER}"
 
 PG_BACKUP_PID=$PG_BACKUP_BASE_DIR/pg_backup_${PG_BACKUP_HOST}.pid
 
@@ -87,6 +96,10 @@ echo End backup at $(date)
 if [[ "${PG_BACKUP_MODE}" == "s" ]]
 then
         [ -f  ${PG_BACKUP_TMP}/pg_wal.tar.gz ] && mv ${PG_BACKUP_TMP}/pg_wal.tar.gz $PG_BACKUP_WALS || { echo "WARNING: temporary pg_wal.tar.gz not found" >&2; }
+fi
+if [[ "${PG_BACKUP_MANIFEST}" == "YM" ]]
+then
+    [ -f ${PG_BACKUP_TMP}/backup_manifest ] && mv  ${PG_BACKUP_TMP}/backup_manifest $PG_BACKUP_MANIFEST_FILE || { echo "WARNING: temporary backup_manifest not found" >&2; }
 fi
 
 echo Start cleanup
