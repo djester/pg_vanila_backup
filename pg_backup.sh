@@ -69,7 +69,7 @@ PG_BACKUP_PARAMETERS="-D ${PG_BACKUP_TMP} -Ft -z -Z 5 -v ${PG_BACKUP_MODE_PARAME
 
 PG_BACKUP_PID=$PG_BACKUP_BASE_DIR/pg_backup_${PG_BACKUP_HOST}.pid
 
-echo "Backup PID file is ${PG_BACKUP_PID}"
+#echo "Backup PID file is ${PG_BACKUP_PID}"
 
 [ -f $PG_BACKUP_PID ] && { echo "Backup script is already running with PID $(cat ${PG_BACKUP_PID})" >&2; exit 1; }
 
@@ -77,7 +77,7 @@ cat > ${PG_BACKUP_PID} <<EOF
 $$
 EOF
 
-echo "Backup PID is $(cat ${PG_BACKUP_PID})"
+#echo "Backup PID is $(cat ${PG_BACKUP_PID})"
 
 # Do backup
 
@@ -90,44 +90,46 @@ echo Start backup at $(date)
 $PG_BACKUP_CMD $PG_BACKUP_PARAMETERS
 
 echo End backup at $(date)
-
-# Move to main from temp directory
+echo
+echo Start cleanup
+echo
+echo ..move to main from temp directory...
 [ -f  ${PG_BACKUP_TMP}/base.tar.gz ] &&  mv ${PG_BACKUP_TMP}/base.tar.gz $PG_BACKUP_FILE || { echo "WARNING: temporary base.tar.gz not found" >&2; }
 if [[ "${PG_BACKUP_MODE}" == "s" ]]
 then
-        [ -f  ${PG_BACKUP_TMP}/pg_wal.tar.gz ] && mv ${PG_BACKUP_TMP}/pg_wal.tar.gz $PG_BACKUP_WALS || { echo "WARNING: temporary pg_wal.tar.gz not found" >&2; }
+    [ -f  ${PG_BACKUP_TMP}/pg_wal.tar.gz ] && mv ${PG_BACKUP_TMP}/pg_wal.tar.gz $PG_BACKUP_WALS || { echo "WARNING: temporary pg_wal.tar.gz not found" >&2; }
 fi
 if [[ "${PG_BACKUP_MANIFEST}" == "YM" ]]
 then
     [ -f ${PG_BACKUP_TMP}/backup_manifest ] && mv  ${PG_BACKUP_TMP}/backup_manifest $PG_BACKUP_MANIFEST_FILE || { echo "WARNING: temporary backup_manifest not found" >&2; }
 fi
 
-echo Start cleanup
 
 # Clean temp files
 
-echo temp files...
+echo ..temp directory...
 rmdir ${PG_BACKUP_TMP} || { [ -d ${PG_BACKUP_TMP} ] && { echo "WARNING: cannot to remove temp backup directory" >&2; } || { echo "WARNING: no temp backup directory for remove " >&2; } }
 
-# Remove PID
-echo remove PID file...
-rm ${PG_BACKUP_PID} || { echo "WARNING: no PID file for remove " >&2; }
 
 # Delete expired backup
-echo backup files...
+echo ..log files...
 case ${PG_BACKUP_EXPIRATION_MODE} in
-        d ) find ${PG_BACKUP_LOGS}/ -mtime +${PG_BACKUP_EXPIRATION_DAYS} -delete ;;
-        c ) ls -1trd ${PG_BACKUP_LOGS}/* | head -n -${PG_BACKUP_EXPIRATION_COUNT} | xargs -d '\n' rm -f -- ;;
-        * ) echo "No expired backup here" ;;
+    d ) find ${PG_BACKUP_LOGS}/ -mtime +${PG_BACKUP_EXPIRATION_DAYS} -delete ;;
+    c ) ls -1trd ${PG_BACKUP_LOGS}/* | head -n -${PG_BACKUP_EXPIRATION_COUNT} | xargs -d '\n' rm -f -- ;;
+    * ) echo "No expired log here" ;;
 esac
 
 # Delete expired backup logs
-echo backup log files...
+echo ..backup files...
 case ${PG_BACKUP_EXPIRATION_MODE} in
-        d ) find ${PG_BACKUP_DIR}/ -mtime +${PG_BACKUP_EXPIRATION_DAYS} -delete ;;
-        c ) ls -1trd ${PG_BACKUP_DIR}/* | head -n -${PG_BACKUP_EXPIRATION_COUNT} | xargs -d '\n' rm -f -- ;;
-        * ) echo "No expired backup here" ;;
+    d ) find ${PG_BACKUP_DIR}/ -mtime +${PG_BACKUP_EXPIRATION_DAYS} -delete ;;
+    c ) ls -1trd ${PG_BACKUP_DIR}/* | head -n -${PG_BACKUP_EXPIRATION_COUNT} | xargs -d '\n' rm -f -- ;;
+    * ) echo "No expired backup here" ;;
 esac
+
+# Remove PID
+echo ..remove PID file...
+rm ${PG_BACKUP_PID} || { echo "WARNING: no PID file for remove " >&2; }
 
 # Success
 echo All task complete successfully
