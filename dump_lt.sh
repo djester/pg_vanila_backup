@@ -27,6 +27,14 @@ GLOBAL_FILE=${DMP_PATH}/global_${PRJ_NAME}.sql
 
 mkdir -p ${DMP_PATH}
 
+PID_FILE=${DMP_PATH}/${DB_NAME}.pid
+if [ ! -f ${PID_FILE} ]; then
+        echo $$ > ${PID_FILE}
+else
+        echo "Error: other dump "${DB_NAME}" process running... PID: "$( cat ${PID_FILE} ) >&2
+        exit 1
+fi
+
 pg_dumpall --roles-only -h $DMP_HOST -p ${DMP_PORT} -U postgres > ${GLOBAL_FILE}
 
 sed -i '/ROLE postgres/d' ${GLOBAL_FILE}
@@ -49,3 +57,8 @@ DMP_PARAMETERS=" -v -b -Fc -h ${DMP_HOST} -U postgres -p ${DMP_PORT} -f ${DMP_FI
 
 # run
 ${DMP_BIN} ${DMP_PARAMETERS} 2> ${DMP_LOG_FILE}
+
+# remove PID
+rm ${PID_FILE}
+
+exit 0
